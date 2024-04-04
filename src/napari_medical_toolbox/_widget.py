@@ -316,23 +316,67 @@ class process_multi_channel(FunctionGui):
                 dir[10],
             )
             new_metadata = {
-                "metadata":{
-                "dim[4]": "1",
-                "pixdim[4]": "1"
-                },
+                "metadata": {"dim[4]": "1", "pixdim[4]": "1"},
                 "origin": metadata["origin"][0:3],
                 "spacing": metadata["spacing"][0:3],
                 "direction": new_direction,
             }
-         
+
             metadata.update(new_metadata)
             self.viewer.add_image(
                 new_layer,
                 name=f"{self.img.name}_concatenated",
                 scale=scale,
                 affine=affine,
-                metadata=metadata
+                metadata=metadata,
             )
+        elif self.operation.value == "split":
+            data=self.img.value.data
+            spacing = self.img.value.metadata["spacing"][:3]
+            scale = list(spacing)[
+                ::-1
+            ]
+            affine = np.eye(4)
+            affine[0, 0] = spacing[2]
+            affine[1, 1] = spacing[1]
+            affine[2, 2] = spacing[0]
+            scale = np.array([1.0, 1.0, 1.0])
+            metadata = self.img.value.metadata
+            dir = metadata["direction"]
+            new_direction = (
+                dir[0],
+                dir[1],
+                dir[2],
+                dir[4],
+                dir[5],
+                dir[6],
+                dir[8],
+                dir[9],
+                dir[10],
+            )
+            new_metadata = {
+                "metadata": {"dim[4]": "1", "pixdim[4]": "1"},
+                "origin": metadata["origin"][0:3],
+                "spacing": metadata["spacing"][0:3],
+                "direction": new_direction,
+            }
+
+            metadata.update(new_metadata)
+            for i in range(data.shape[0]):
+                new_layer=data[i]
+  
+
+                self.viewer.add_image(
+                    new_layer,
+                    name=f"{self.img.name}_split_{i}",
+                    scale=scale,
+                    affine=affine,
+                    metadata=metadata,
+                )
+
+                
+
+
 
     #     self.update_operation()
 
