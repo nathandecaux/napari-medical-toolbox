@@ -5,7 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
-
+*.nii.gz
+*.ckpt
 # Distribution / packaging
 .Python
 env/
@@ -82,3 +83,4 @@ venv/
 
 # written by setuptools_scm
 **/_version.py
+sub-5_ses-2_T2_RAW.nii.gz

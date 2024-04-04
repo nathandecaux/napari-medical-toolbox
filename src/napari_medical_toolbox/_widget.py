@@ -29,15 +29,32 @@ References:
 Replace code below according to your needs.
 """
 
+import shutil
 from typing import TYPE_CHECKING
 
+import napari
 from magicgui import magic_factory
-from magicgui.widgets import CheckBox, Container, create_widget
+from magicgui.widgets import (
+    CheckBox,
+    Container,
+    FileEdit,
+    FunctionGui,
+    PushButton,
+    RadioButtons,
+    create_widget,
+)
 from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
 from skimage.util import img_as_float
 
 if TYPE_CHECKING:
     import napari
+
+
+import os
+
+import numpy as np
+import pandas as pd
+from napari.utils.colormaps import DirectLabelColormap
 
 
 # Uses the `autogenerate: true` flag in the plugin manifest
@@ -127,3 +144,182 @@ class ExampleQWidget(QWidget):
 
     def _on_click(self):
         print("napari has", len(self.viewer.layers), "layers")
+
+
+def set_label_colormap_function(table: pd.DataFrame):
+    pass
+
+
+class set_label_colormap(FunctionGui):
+    def __init__(self, viewer: "napari.viewer.Viewer"):
+        super().__init__(
+            set_label_colormap_function, call_button=False, persist=True
+        )
+        self.viewer = viewer
+        self.colormap_file = FileEdit(label="Get colormap from file")
+        self.insert(-1, self.colormap_file)
+        self.label_names = RadioButtons(label="Label names", choices=[])
+        self.file_button = PushButton(label="Load colormap")
+        self.file_button.clicked.connect(self.update_colormap)
+        self.insert(-1, self.file_button)
+        self.insert(-1, self.label_names)
+
+        # self.colormap_file.changed.connect(self.update_colormap)
+        self.label_names.changed.connect(self.update_selected_label)
+        # Check if /tmp/last_cmap_napari.txt exists
+        if os.path.exists("/tmp/last_cmap_napari.txt"):
+            try:
+                self.colormap_file.value = "/tmp/last_cmap_napari.txt"
+                # Click the file_button
+                self.file_button.clicked()
+            except:
+                napari.utils.notifications.show_info(
+                    "Error: Could not load last colormap"
+                )
+
+    def get_colormap(self, file):
+        cmap = DirectLabelColormap()
+        with open(file) as f:
+            labels = f.read().splitlines()
+        # Keep only values after the second occurence of "################################################"
+        labels = labels[
+            labels.index("################################################")
+            + 1 :
+        ]
+        labels = labels[
+            labels.index("################################################")
+            + 1 :
+        ][1:]
+        choices = {"choices": ["0"], "key": ["0 - Background"]}
+        colormap = {}
+        # colormap_hex = {0: "#000000"}
+        colormap = {0: np.array([0, 0, 0, 0]).astype("float32")}
+        for label in labels:
+            label = label.split()
+            val = label[0]
+            color = np.array(label[1:4]).astype("float32") / 255.0
+            name = " ".join(label[7:]).replace('"', "")
+            choices["key"].append(str(val) + " - " + name)
+            choices["choices"].append(str(val))
+            colormap[int(val)] = np.concatenate(
+                [color, np.array([0.5], dtype="float32")]
+            )
+
+        cmap.color_dict.update(colormap)
+        key = choices["key"]
+        # Convert key as a callable function that takes choices['choices'] as input and returns key
+        choices["key"] = lambda x: key[choices["choices"].index(x)]
+        self.cmap = cmap
+        self.choices = choices
+        # Save cmap
+
+    def update_colormap(self):
+        if self.colormap_file.value != "":
+            self.get_colormap(self.colormap_file.value)
+            self.apply_cmap()
+            # Copy file self.colormap_file.value (filename) to /tmp/last_cmap_napari.txt
+            try:
+                shutil.copy(
+                    self.colormap_file.value, "/tmp/last_cmap_napari.txt"
+                )
+            except shutil.SameFileError:
+                pass
+
+            # print(DirectLabelColormap(list(colormap.values())))
+            # Get napari.layers.Labels from self.labels_layer
+            # label_layer=[os.path.basename(x.name) for x in self.viewer.layers if isinstance(x,napari.layers.Labels)] #and x.name==self.labels_layer.value][0]
+            # print(label_layer.colormap.color_dict)
+
+    def apply_cmap(self):
+        for layer in [
+            x
+            for x in self.viewer.layers
+            if isinstance(x, napari.layers.Labels)
+        ]:
+            layer.colormap = self.cmap
+
+        self.label_names.choices = self.choices
+
+    def update_selected_label(self):
+        for layer in [
+            x
+            for x in self.viewer.layers
+            if isinstance(x, napari.layers.Labels)
+        ]:
+            layer.selected_label = int(self.label_names.value)
+
+
+def process_multi_channel_function(img: "napari.layers.Image"):
+    pass
+
+
+class process_multi_channel(FunctionGui):
+    def __init__(self, viewer: "napari.viewer.Viewer"):
+        super().__init__(
+            process_multi_channel_function, call_button=False, persist=True
+        )
+        self.viewer = viewer
+        self.operation = RadioButtons(
+            label="Operation", choices=["concatenate", "split", "average"]
+        )
+        self.insert(-2, self.operation)
+        self.dim = 0
+        # self.insert(-1,self.dim)
+        # #If img is not None, update dim
+        # self.img.changed.connect(self.auto_update_dim)
+        # if self.img.value is not None:
+        #     self.auto_update_dim()
+
+        self.push_button = PushButton(label="Process")
+        self.insert(-1, self.push_button)
+        self.push_button.clicked.connect(self.update_operation)
+
+    def auto_update_dim(self):
+        shape = self.img.value.data.shape
+        # Get the smallest dimension
+        self.dim.value = shape.index(min(shape))
+
+    def update_operation(self):
+        if self.operation.value == "concatenate":
+            # Stack the images along the dimension dim
+            # Get the image from self.img
+            new_layer = self.img.value.data
+            # new_layer=np.moveaxis(new_layer,self.dim.value,0)
+            new_layer = np.concatenate(
+                [new_layer[i] for i in range(new_layer.shape[0])]
+            )
+            # Get the self.image layer
+            spacing = self.img.value.metadata["spacing"][:3]
+            scale = list(spacing)[
+                ::-1
+            ]  # Remove the dimension dim from the scale
+            affine = np.eye(4)
+            affine[0, 0] = spacing[2]
+            affine[1, 1] = spacing[1]
+            affine[2, 2] = spacing[0]
+            scale = np.array([1.0, 1.0, 1.0])
+            # #Remove column and row dim from the affine
+            # affine=np.delete(affine,self.dim.value,0)
+            # affine=np.delete(affine,self.dim.value,1)
+            metadata = self.img.value.metadata
+            print(metadata)
+            dir=metadata['direction']
+            new_direction=(dir[0],dir[1],dir[2],dir[4],dir[5],dir[6],dir[8],dir[9],dir[10])
+            new_metadata={'dim[4]':'1',"pixdim[4]":'1','origin':metadata['origin'][0:3],'spacing':metadata['spacing'][0:3],'direction':new_direction}
+            
+            self.viewer.add_image(
+                new_layer,
+                name=f"{self.img.name}_concatenated",
+                scale=scale,
+                affine=affine,
+                metadata=metadata.update(new_metadata)
+            )
+
+    #     self.update_operation()
+
+    # def update_operation(self):
+    #     if self.operation.value=='stack':
+    #         self.viewer.layers.selection.active='stack'
+    #     else:
+    #         self.viewer.layers.selection.active='average'
+    #     self.viewer.layers.selection.active=self.operation.value

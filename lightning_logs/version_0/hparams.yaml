@@ -1,0 +1,18 @@
+n_channels: 1
+n_classes: 11
+learning_rate: 0.0005
+weight_decay: 1.0e-08
+way: both
+shape:
+- 256
+- 256
+selected_slices: null
+losses:
+  compo-reg-up: true
+  compo-reg-down: true
+  compo-dice-up: true
+  compo-dice-down: true
+  bidir-cons-reg: false
+  bidir-cons-dice: false
+by_composition: false
+unsupervised: false

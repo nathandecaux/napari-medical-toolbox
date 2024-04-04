@@ -27,24 +27,36 @@ contributions:
     - id: napari-medical-toolbox.make_qwidget
       python_name: napari_medical_toolbox:ExampleQWidget
       title: Make example QWidget
-  readers:
-    - command: napari-medical-toolbox.get_reader
-      accepts_directories: false
-      filename_patterns: ['*.npy']
-  writers:
-    - command: napari-medical-toolbox.write_multiple
-      layer_types: ['image*','labels*']
-      filename_extensions: []
-    - command: napari-medical-toolbox.write_single_image
-      layer_types: ['image']
-      filename_extensions: ['.npy']
+
+    - id: napari-medical-toolbox.set_label_colormap
+      python_name: napari_medical_toolbox._widget:set_label_colormap
+      title: Set label colormap
+    - id: napari-medical-toolbox.process_multi_channel
+      python_name: napari_medical_toolbox._widget:process_multi_channel
+      title: Manipulate multi-channel images
+  # readers:
+  #   - command: napari-medical-toolbox.get_reader
+  #     accepts_directories: false
+  #     filename_patterns: ['*.npy']
+  # writers:
+  #   - command: napari-medical-toolbox.write_multiple
+  #     layer_types: ['image*','labels*']
+  #     filename_extensions: []
+  #   - command: napari-medical-toolbox.write_single_image
+  #     layer_types: ['image']
+  #     filename_extensions: ['.npy']
   widgets:
-    - command: napari-medical-toolbox.make_container_widget
-      display_name: Container Threshold
-    - command: napari-medical-toolbox.make_magic_widget
-      display_name: Magic Threshold
-    - command: napari-medical-toolbox.make_function_widget
-      autogenerate: true
-      display_name: Autogenerate Threshold
-    - command: napari-medical-toolbox.make_qwidget
-      display_name: Example QWidget
+    # - command: napari-medical-toolbox.make_container_widget
+    #   display_name: Container Threshold
+    # - command: napari-medical-toolbox.make_magic_widget
+    #   display_name: Magic Threshold
+    # - command: napari-medical-toolbox.make_function_widget
+    #   autogenerate: true
+    #   display_name: Autogenerate Threshold
+    # - command: napari-medical-toolbox.make_qwidget
+    #   display_name: Example QWidget
+
+    - command: napari-medical-toolbox.set_label_colormap
+      display_name: Set Label Colormap
+    - command: napari-medical-toolbox.process_multi_channel
+      display_name: Manipulate multi-channel images
