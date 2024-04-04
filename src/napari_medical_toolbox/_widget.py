@@ -303,16 +303,32 @@ class process_multi_channel(FunctionGui):
             # affine=np.delete(affine,self.dim.value,1)
             metadata = self.img.value.metadata
             print(metadata)
-            dir=metadata['direction']
-            new_direction=(dir[0],dir[1],dir[2],dir[4],dir[5],dir[6],dir[8],dir[9],dir[10])
-            new_metadata={'dim[4]':'1',"pixdim[4]":'1','origin':metadata['origin'][0:3],'spacing':metadata['spacing'][0:3],'direction':new_direction}
-            
+            dir = metadata["direction"]
+            new_direction = (
+                dir[0],
+                dir[1],
+                dir[2],
+                dir[4],
+                dir[5],
+                dir[6],
+                dir[8],
+                dir[9],
+                dir[10],
+            )
+            new_metadata = {
+                "dim[4]": "1",
+                "pixdim[4]": "1",
+                "origin": metadata["origin"][0:3],
+                "spacing": metadata["spacing"][0:3],
+                "direction": new_direction,
+            }
+
             self.viewer.add_image(
                 new_layer,
                 name=f"{self.img.name}_concatenated",
                 scale=scale,
                 affine=affine,
-                metadata=metadata.update(new_metadata)
+                metadata=metadata.update(new_metadata),
             )
 
     #     self.update_operation()
