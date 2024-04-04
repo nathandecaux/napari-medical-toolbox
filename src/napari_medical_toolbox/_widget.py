@@ -316,19 +316,22 @@ class process_multi_channel(FunctionGui):
                 dir[10],
             )
             new_metadata = {
+                "metadata":{
                 "dim[4]": "1",
-                "pixdim[4]": "1",
+                "pixdim[4]": "1"
+                },
                 "origin": metadata["origin"][0:3],
                 "spacing": metadata["spacing"][0:3],
                 "direction": new_direction,
             }
-
+         
+            metadata.update(new_metadata)
             self.viewer.add_image(
                 new_layer,
                 name=f"{self.img.name}_concatenated",
                 scale=scale,
                 affine=affine,
-                metadata=metadata.update(new_metadata),
+                metadata=metadata
             )
 
     #     self.update_operation()
